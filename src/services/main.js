@@ -1,159 +1,66 @@
-// Import our custom CSS
 import "../assets/scss/styles.scss";
-import * as bootstrap from "bootstrap";
 import {
-  buildEmptyUploadEl,
-  buildPaginationNav,
-  buildTextLink,
-  buildToastEl,
-  buildUploadTBody,
-} from "../helper/html.helper";
-import uploadService from "./uploadService";
-import {
+  RESULT_PAGE_SIZE_IN_DASHBOARD,
   UPLOAD_PAGE_SIZE,
   UPLOAD_PAGE_SIZE_IN_DASHBOARD,
 } from "../helper/constants";
+import { userService } from './common/userService';
+import { login } from './login/login';
+import { signUp } from './signup/signup';
+import { buildUploadRecordsTable, handleUploadFile } from './upload/upload';
+import { buildSearchResultsTable } from './result/result';
+import { signOut } from './signout/signout';
 
-export async function handleUploadFile() {
-  const fileInput = document.getElementById("formFile");
-  const file = fileInput.files[0];
+document.addEventListener('DOMContentLoaded', async function () {
+  const jwtToken = userService.getJwt();
+  const isValid = await userService.validateToken(jwtToken);
 
-  const formData = new FormData();
-  formData.append("file", file);
-
-  const toastDiv = document.createElement("div");
-  toastDiv.classList.add(
-    "toast",
-    "align-items-center",
-    "border-0",
-    "toast-top-right",
-    "position-fixed"
-  );
-  toastDiv.id = "toast";
-  let message;
-
-  try {
-    if (!file) {
-      message = "There is no file selected!";
-      toastDiv.classList.add("bg-warning", "text-dark");
-      return;
-    }
-
-    await uploadService.uploadCsv(formData);
-    fileInput.value = null;
-
-    toastDiv.classList.add("bg-success", "text-white");
-    message = "Upload successfully!";
-
-    buildUploadRecordsTable();
-  } catch (err) {
-    toastDiv.classList.add("bg-danger", "text-white");
-    message = `Upload failed! Error: ${err.message}`;
-  } finally {
-    toastDiv.innerHTML = buildToastEl(message);
-    const mainTitleDiv = document.getElementById("main-title");
-    mainTitleDiv.appendChild(toastDiv);
-    const toastEl = new bootstrap.Toast(toastDiv);
-    toastEl.show();
+  if (!jwtToken && !isValid && ['/', '/index.html', '/results.html', '/uploads.html'].includes(window.location.pathname)) {
+    window.location.href = '/login.html';
   }
+})
+
+if (window.location.pathname === "/login.html") {
+  document.getElementById("login-btn").onclick = login;
+  ['input-email', 'input-password'].forEach((el) => {
+    document.getElementById(el).addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        login();
+      }
+    });
+  })
 }
 
-export async function buildUploadRecordsTable(pageSize) {
-  const uploadListDiv = document.getElementById("upload-list");
-  uploadListDiv && uploadListDiv.remove();
-
-  const res = await uploadService.getUploadRecords(1, pageSize);
-  if (!res) return buildEmptyUploadEl();
-
-  document.getElementById("upload-section").insertAdjacentHTML(
-    "beforeend",
-    `
-    <div id="upload-list" class="table-responsive small">
-      <table class="table table-striped table-sm">
-        <thead>
-          <tr>
-            <th scope="col">ID</th>
-            <th scope="col">Uploaded At</th>
-            <th scope="col">File Name</th>
-            <th scope="col">Status</th>
-            <th scope="col">Action</th>
-          </tr>
-        </thead>
-        <tbody id="upload-tbody">
-        </tbody>
-      </table>
-    </div>
-    `
-  );
-
-  buildUploadTBody("upload-tbody", res.uploads);
-
-  if (pageSize === UPLOAD_PAGE_SIZE_IN_DASHBOARD) {
-    document
-      .getElementById("upload-list")
-      .append(
-        buildTextLink(
-          "View more uploads",
-          () => (window.location.href = "/uploads.html")
-        )
-      );
-  } else {
-    const page = Math.ceil(res.total / pageSize);
-    document.getElementById("upload-section").append(buildPaginationNav(page, pageSize));
-  }
-}
-
-export async function buildSearchResultsTable(pageSize) {
-  const resultsList = document.getElementById("results-list");
-  resultsList && resultsList.remove();
-
-  const res = await uploadService.getUploadRecords(1, pageSize);
-  if (!res) return buildEmptyUploadEl();
-
-  document.getElementById("upload-section").insertAdjacentHTML(
-    "beforeend",
-    `
-    <div id="upload-list" class="table-responsive small">
-      <table class="table table-striped table-sm">
-        <thead>
-          <tr>
-            <th scope="col">ID</th>
-            <th scope="col">Uploaded At</th>
-            <th scope="col">File Name</th>
-            <th scope="col">Status</th>
-            <th scope="col">Action</th>
-          </tr>
-        </thead>
-        <tbody id="upload-tbody">
-        </tbody>
-      </table>
-    </div>
-    `
-  );
-
-  buildUploadTBody("upload-tbody", res.uploads);
-
-  if (pageSize === UPLOAD_PAGE_SIZE_IN_DASHBOARD) {
-    document
-      .getElementById("upload-list")
-      .append(
-        buildTextLink(
-          "View more uploads",
-          () => (window.location.href = "/uploads.html")
-        )
-      );
-  } else {
-    const page = Math.ceil(res.total / pageSize);
-    document.getElementById("upload-section").append(buildPaginationNav(page, pageSize));
-  }
+if (window.location.pathname === "/signup.html") {
+  document.getElementById("signup-btn").onclick = signUp;
+  ['input-name', 'input-email', 'input-password'].forEach((el) => {
+    document.getElementById(el).addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        signUp();
+      }
+    });
+  })
 }
 
 if (["/", "/index.html"].includes(window.location.pathname)) {
-  buildUploadRecordsTable(UPLOAD_PAGE_SIZE_IN_DASHBOARD);
+  const isShowDashboard = true;
+  await buildUploadRecordsTable(UPLOAD_PAGE_SIZE_IN_DASHBOARD, isShowDashboard);
+  await buildSearchResultsTable(RESULT_PAGE_SIZE_IN_DASHBOARD, isShowDashboard);
   document.getElementById("upload-button").onclick = handleUploadFile;
 }
 
 if (window.location.pathname === "/uploads.html") {
-  buildUploadRecordsTable(UPLOAD_PAGE_SIZE);
+  const isShowDashboard = false;
+  await buildUploadRecordsTable(UPLOAD_PAGE_SIZE, isShowDashboard);
   document.getElementById("upload-button").onclick = handleUploadFile;
+}
+
+if (window.location.pathname === "/results.html") {
+  await buildSearchResultsTable(UPLOAD_PAGE_SIZE);
+}
+
+if (!['/signup.html', 'login.html'].includes(window.location.pathname)) {
+  document.getElementById('sign-out-btn').addEventListener('click', signOut);
 }
