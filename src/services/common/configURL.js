@@ -5,12 +5,16 @@ export const BASE_URL = "http://localhost:3000";
 
 export const createConfig = () => {
   return {
-    token: userService.getItem()?.token,
+    Authorization: `Bearer ${userService.getJwt()}`,
   };
 };
 
 export const http = axios.create({
   baseURL: BASE_URL,
   timeout: 30000,
-  // headers: createConfig(),
 });
+
+http.interceptors.request.use(config => {
+  config.headers = createConfig();
+  return config;
+})
