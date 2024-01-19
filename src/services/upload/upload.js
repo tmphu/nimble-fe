@@ -48,10 +48,6 @@ export async function handleUploadFile() {
     if (window.location.pathname === "/uploads.html") {
       const isShowDashboard = false;
       await buildUploadRecordsTable(UPLOAD_PAGE_SIZE, isShowDashboard);
-
-      await new Ping(ping, 3000).execute(async () => {
-        await buildSearchResultsTable(RESULT_PAGE_SIZE, isShowDashboard);
-      });
     } else {
       const isShowDashboard = true;
       await buildUploadRecordsTable(UPLOAD_PAGE_SIZE_IN_DASHBOARD, isShowDashboard);
