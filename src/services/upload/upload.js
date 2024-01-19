@@ -32,23 +32,31 @@ export async function handleUploadFile() {
       return;
     }
 
+    const reader = new FileReader();
+    let fileContent = '';
+    reader.addEventListener('load', event => {
+      fileContent = event.target.result;
+    })
+    reader.readAsText(file);
+
     await uploadService.uploadCsv(formData);
     fileInput.value = null;
 
     toastMsg("success", "Upload successfully!", elementId);
 
+    const ping = Math.ceil(fileContent.split('\n')?.length / 5)*5;
     if (window.location.pathname === "/uploads.html") {
       const isShowDashboard = false;
       await buildUploadRecordsTable(UPLOAD_PAGE_SIZE, isShowDashboard);
 
-      await new Ping(15, 3000).execute(async () => {
+      await new Ping(ping, 3000).execute(async () => {
         await buildSearchResultsTable(RESULT_PAGE_SIZE, isShowDashboard);
       });
     } else {
       const isShowDashboard = true;
       await buildUploadRecordsTable(UPLOAD_PAGE_SIZE_IN_DASHBOARD, isShowDashboard);
 
-      await new Ping(15, 3000).execute(async () => {
+      await new Ping(ping, 3000).execute(async () => {
         await buildSearchResultsTable(RESULT_PAGE_SIZE_IN_DASHBOARD, isShowDashboard);
       });
     }
@@ -115,12 +123,10 @@ export const buildUploadTBody = (elementId, data = []) => {
       DateTimeConverter.convert(e.createdAt),
       e.fileName,
       e.status,
-      buildTextLink("View", () => console.log(e.id)),
     ];
     for (let i = 0; i < arr.length; i++) {
       const el = document.createElement("td");
       el.textContent = arr[i];
-      i === arr.length - 1 && el.appendChild(arr[i]);
       tr.appendChild(el);
     }
 

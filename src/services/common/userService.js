@@ -1,7 +1,7 @@
 import { http } from './configURL';
 
-export const USER_LOGIN = "USER_LOGIN";
-export const JWT = "JWT";
+export const USER_LOGIN = "user_info";
+export const JWT = "token";
 
 export const userService = {
   signUp: async (payload) => {
