@@ -22,7 +22,7 @@ $ npm install
 ```
 
 ## Running the app
-
+Default baseUrl of backend is http://localhost:3000. If you have changed BE port, please update this value in ```configURL.js```.
 ```bash
 # development
 $ npm run start
